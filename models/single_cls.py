@@ -420,7 +420,7 @@ class SingleClassifier(LightningModule):
             os.makedirs(test_pred_save_path)
 
         model_type = self.__class__.__name__.lower()
-        json_file = os.path.join(test_pred_save_path, f'{model_type}_results.json')
+        json_file = os.path.join(test_pred_save_path, f'{model_type}_test_results.json')
         with open(json_file, 'w') as f:
             json.dump(test_results, f, sort_keys=True, indent=4)
 
