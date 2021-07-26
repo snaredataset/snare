@@ -1,0 +1,65 @@
+hydra:
+  run:
+    dir: ${root_dir}/${train.exps_folder}/${train.folder}
+  sweep:
+    dir: ${root_dir}/${train.exps_folder}/
+    subdir: ${train.folder}
+
+root_dir: <root_dir>
+
+tag: default
+seed: 0
+debug: False
+
+wandb:
+  logger:
+    entity: snare
+    project: snare
+    tags: []
+    offline: False
+    run_name: ${train.run_name}
+  saver:
+    upload: False
+    monitor: 'val_acc'
+
+data:
+  fast_epoch: False
+  amt_data: '${root_dir}/amt/'
+  folds: 'folds_adversarial'
+
+  clip_lang_feats: '${root_dir}/data/langfeat-512-clipViT32.json.gz'
+  clip_img_feats: '${root_dir}/data/shapenet-clipViT32-frames.json.gz'
+
+train:
+  exps_folder: 'exps'
+  folder: ${train.feats_backbone}-${train.model}-${train.run_name}
+  run_name: ${train.aggregator.type}
+  pretrained_model: ''
+  model: 'single_cls'
+  random_seed: 42
+  log: False
+  lr: 1e-3
+  batch_size: 64
+  max_epochs: 50
+  load_from_last_ckpt: False
+  dropout: 0.1
+  normalize_feats: True
+  pretrained_checkpoint: ""
+  fc_projection_type: "fc"
+  feats_backbone: "clip"
+
+  aggregator:
+    type: 'maxpool'
+    index: 0 # zeroth-view for 'index' aggregation type
+
+  rotator:
+    teacher_force: True # during training
+    pretrained_cls: '${root_dir}/exp_may06/clip-single_cls-random_index/checkpoints/epoch=0041-val_acc=0.80161.ckpt'
+
+  loss:
+    est_weight: 1.0
+    rot_weight: 1.0
+    cls_weight: 0.2
+
+val:
+  adversarial_init_view: False
