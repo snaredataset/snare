@@ -2,6 +2,20 @@
 
 SNARE dataset and code for MATCH and LaGOR models. 
 
+## Paper and Citation
+
+[Language Grounding with 3D Objects](https://arxiv.org/abs/2107.12514)
+
+```
+@article{snare,
+  title={Language Grounding with {3D} Objects},
+  author={Jesse Thomason and Mohit Shridhar and Yonatan Bisk and Chris Paxton and Luke Zettlemoyer},
+  journal={arXiv},
+  year={2021},
+  url={https://arxiv.org/abs/2107.12514}
+}
+```
+
 ## Installation
 
 #### Clone
