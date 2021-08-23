@@ -3,7 +3,7 @@ from pathlib import Path
 
 import hydra
 from pytorch_lightning import Trainer
-from pytorch_lightning.callbacks.model_checkpoint import ModelCheckpoint
+from pytorch_lightning.callbacks import ModelCheckpoint
 import numpy as np
 import random
 
@@ -28,7 +28,8 @@ def main(cfg):
 
     checkpoint_callback = ModelCheckpoint(
         monitor=cfg['wandb']['saver']['monitor'],
-        filename=checkpoint_path / '{epoch:04d}-{val_acc:.5f}',
+        dirpath=checkpoint_path,
+        filename='{epoch:04d}-{val_acc:.5f}',
         save_top_k=1,
         save_last=True,
     )
@@ -36,7 +37,6 @@ def main(cfg):
         gpus=[0],
         fast_dev_run=cfg['debug'],
         checkpoint_callback=checkpoint_callback,
-        # callbacks=checkpoint_callback,
         max_epochs=cfg['train']['max_epochs'],
     )
 
