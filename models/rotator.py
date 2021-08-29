@@ -269,7 +269,7 @@ class Rotator(SingleClassifier):
             loss = 0
             est_init_views1 = init_views1
             est_init_views2 = init_views2
-
+        
         return {
             'best_views1': best_views1,
             'best_views2': best_views2,
