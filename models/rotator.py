@@ -14,6 +14,13 @@ from models.single_cls import SingleClassifier
 class Rotator(SingleClassifier):
 
     def __init__(self, cfg, train_ds, val_ds):
+        self.estimate_init_state = False
+        self.estimate_final_state = False
+        self.img_fc = None
+        self.lang_fc = None
+        self.cls_fc = None
+        self.state_fc = None
+        self.action_fc = None
         super().__init__(cfg, train_ds, val_ds)
 
     def build_model(self):
@@ -41,8 +48,12 @@ class Rotator(SingleClassifier):
         # load pre-trained classifier (gets overrided if loading pre-trained rotator)
         # Note: gets overrided if loading pre-trained rotator
         model_path = self.cfg['train']['rotator']['pretrained_cls']
-        self.load_state_dict(torch.load(model_path)['state_dict'])
+        checkpoint = torch.load(model_path)
+        self.load_state_dict(checkpoint['state_dict'])
         print(f"Loaded: {model_path}")
+
+        self.estimate_init_state = self.cfg['train']['rotator']['estimate_init_state']
+        self.estimate_final_state = self.cfg['train']['rotator']['estimate_final_state']
 
         # state estimation layers
         self.state_fc = nn.Sequential(
@@ -84,32 +95,38 @@ class Rotator(SingleClassifier):
             self.load_state_dict(torch.load(model_path)['state_dict'])
             print(f"Loaded: {model_path}")
 
-
-    def forward(self, batch, teacher_force=True, init_view_force=None, final_view_force=None):
+    def forward(self, batch, teacher_force=True, init_view_force=None):
         (img1_n_feats, img2_n_feats), lang_feats, ans, (key1, key2), annotation, is_visual = batch
 
-        # rotate to and estimate current view
-        next_views_out = self.estimate_state(img1_n_feats, img2_n_feats, lang_feats,
-                                             ans, teacher_force, init_view_force, final_view_force)
+        # estimate current view
+        init_state_estimation = self.estimate_state(img1_n_feats, img2_n_feats, lang_feats, init_view_force,
+                                                    self.estimate_init_state)
 
         # output variables from state estimation
         bs = img1_n_feats.shape[0]
 
-        img1_n_feats = next_views_out['img1_n_feats']
-        img2_n_feats = next_views_out['img2_n_feats']
-        lang_feats = next_views_out['lang_feats']
+        img1_n_feats = init_state_estimation['img1_n_feats']
+        img2_n_feats = init_state_estimation['img2_n_feats']
+        lang_feats = init_state_estimation['lang_feats']
 
-        init_views1 = next_views_out['init_views1']
-        init_views2 = next_views_out['init_views2']
+        init_views1 = init_state_estimation['init_views1']
+        init_views2 = init_state_estimation['init_views2']
 
-        est_init_views1 = next_views_out['est_init_views1']
-        est_init_views2 = next_views_out['est_init_views2']
+        est_init_views1 = init_state_estimation['est_init_views1']
+        est_init_views2 = init_state_estimation['est_init_views2']
 
-        loss = next_views_out['loss']
+        loss = init_state_estimation['loss']
 
         # choose features of ramdomly sampling viewpoints
-        img1_chosen_feats, img2_chosen_feats = self.choose_feats_from_random_views(bs, img1_n_feats, img2_n_feats,
-                                                                                   init_views1, init_views2)
+        img1_chosen_feats, img2_chosen_feats, rotated_views1, rotated_views2 = self.choose_feats_from_random_views(
+            bs, img1_n_feats, img2_n_feats, init_views1, init_views2)
+
+        # estimate second view before performing prediction
+        final_state_estimation = self.estimate_state(img1_n_feats, img2_n_feats, lang_feats,
+                                                     [rotated_views1, rotated_views2], self.estimate_final_state)
+        est_final_views1 = final_state_estimation['est_init_views1']
+        est_final_views2 = final_state_estimation['est_init_views2']
+        loss += final_state_estimation['loss']
 
         # classifier probablities chosen features
         img1_chosen_prob = self.cls_fc(torch.cat([img1_chosen_feats, lang_feats], dim=-1))
@@ -123,19 +140,29 @@ class Rotator(SingleClassifier):
 
         test_mode = (ans[0] == -1)
         if not test_mode:
-        # classifier loss
+            # classifier loss
             cls_labels = F.one_hot(ans)
             cls_loss_weight = self.cfg['train']['loss']['cls_weight']
             loss += (self.smoothed_cross_entropy(raw_probs, cls_labels)) * cls_loss_weight
 
-            # state estimation accuracy
-            est_view1_corrects = int(torch.count_nonzero(est_init_views1 == init_views1))
-            est_view2_corrects = int(torch.count_nonzero(est_init_views2 == init_views2))
-            total_correct_estimations = est_view1_corrects + est_view2_corrects
+            # put rotated views on device
+            rotated_views1 = rotated_views1.to(device=self.device).int()
+            rotated_views2 = rotated_views2.to(device=self.device).int()
 
-            # state estimation error
+            # state estimation accuracy
+            est_init_view1_corrects = int(torch.count_nonzero(est_init_views1 == init_views1))
+            est_init_view2_corrects = int(torch.count_nonzero(est_init_views2 == init_views2))
+            total_correct_init_view_est = est_init_view1_corrects + est_init_view2_corrects
+
+            est_final_view1_corrects = int(torch.count_nonzero(est_final_views1 == rotated_views1))
+            est_final_view2_corrects = int(torch.count_nonzero(est_final_views2 == rotated_views2))
+            total_correct_final_view_est = est_final_view1_corrects + est_final_view2_corrects
+
+            # state estimation errors
             est_err = torch.cat([self.modulo_views(init_views1 - est_init_views1).abs().float(),
                                  self.modulo_views(init_views2 - est_init_views2).abs().float()])
+            est_err += torch.cat([self.modulo_views(rotated_views1 - est_final_views1).abs().float(),
+                                  self.modulo_views(rotated_views2 - est_final_views2).abs().float()])
             est_err = est_err.mean()
 
             return {
@@ -145,10 +172,13 @@ class Rotator(SingleClassifier):
                 'is_visual': is_visual,
                 'num_steps': num_steps,
 
-                'total_correct_estimations': total_correct_estimations,
+                'total_correct_init_view_est': total_correct_init_view_est,
+                'total_correct_final_view_est': total_correct_final_view_est,
                 'est_error': est_err,
                 'est_init_views1': est_init_views1,
                 'est_init_views2': est_init_views2,
+                'est_final_views1': est_final_views1,
+                'est_final_views2': est_final_views2,
             }
         else:
             return {
@@ -156,8 +186,7 @@ class Rotator(SingleClassifier):
                 'num_steps': num_steps,
             }
 
-    def estimate_state(self, img1_n_feats, img2_n_feats, lang_feats, ans, teacher_force,
-                       init_view_force, final_view_force):
+    def estimate_state(self, img1_n_feats, img2_n_feats, lang_feats, init_view_force, perform_estimate):
         # to device
         img1_n_feats = img1_n_feats.to(device=self.device).float()
         img2_n_feats = img2_n_feats.to(device=self.device).float()
@@ -165,7 +194,6 @@ class Rotator(SingleClassifier):
 
         all_probs = []
         bs = img1_n_feats.shape[0]
-        num_views = img1_n_feats.shape[1]
 
         # lang encoding
         lang_feats = self.lang_fc(lang_feats)
@@ -177,7 +205,7 @@ class Rotator(SingleClassifier):
             lang_feats /= lang_feats.norm(dim=-1, keepdim=True)
 
         # compute single_cls probs for 8 view pairs
-        for v in range(num_views):
+        for v in range(self.num_views):
             # aggregate
             img1_feats = img1_n_feats[:, v]
             img2_feats = img2_n_feats[:, v]
@@ -212,30 +240,35 @@ class Rotator(SingleClassifier):
         else:
             # initialize with random views
             if init_view_force is None:
-                init_views1 = torch.randint(num_views, (bs,)).cuda()
-                init_views2 = torch.randint(num_views, (bs,)).cuda()
+                init_views1 = torch.randint(self.num_views, (bs,)).cuda()
+                init_views2 = torch.randint(self.num_views, (bs,)).cuda()
             else:
-                init_views1 = torch.ones((bs,)).int().cuda() * init_view_force
-                init_views2 = torch.ones((bs,)).int().cuda() * init_view_force
+                init_views1 = init_view_force[0].to(device=self.device).int()
+                init_views2 = init_view_force[1].to(device=self.device).int()
 
         # init features
         img1_init_feats = torch.stack([img1_n_feats[i, init_views1[i], :] for i in range(bs)])
         img2_init_feats = torch.stack([img2_n_feats[i, init_views2[i], :] for i in range(bs)])
 
-        # state estimator
-        est_init_views_logits1 = self.state_fc(img1_init_feats)
-        est_init_views_logits2 = self.state_fc(img2_init_feats)
+        gt_init_views1 = F.one_hot(init_views1.to(torch.int64), num_classes=self.num_views)
+        gt_init_views2 = F.one_hot(init_views2.to(torch.int64), num_classes=self.num_views)
 
-        gt_init_views1 = F.one_hot(init_views1.to(torch.int64), num_classes=8)
-        gt_init_views2 = F.one_hot(init_views2.to(torch.int64), num_classes=8)
+        if perform_estimate:
+            # state estimator
+            est_init_views_logits1 = self.state_fc(img1_init_feats)
+            est_init_views_logits2 = self.state_fc(img2_init_feats)
 
-        # state estimation loss
-        est_loss_weight = self.cfg['train']['loss']['est_weight']
-        loss = ((self.smoothed_cross_entropy(est_init_views_logits1, gt_init_views1) +
-                 self.smoothed_cross_entropy(est_init_views_logits2, gt_init_views2)) / 2) * est_loss_weight
+            # state estimation loss
+            est_loss_weight = self.cfg['train']['loss']['est_weight']
+            loss = ((self.smoothed_cross_entropy(est_init_views_logits1, gt_init_views1) +
+                     self.smoothed_cross_entropy(est_init_views_logits2, gt_init_views2)) / 2) * est_loss_weight
 
-        est_init_views1 = F.softmax(est_init_views_logits1, dim=-1).argmax(-1)
-        est_init_views2 = F.softmax(est_init_views_logits2, dim=-1).argmax(-1)
+            est_init_views1 = F.softmax(est_init_views_logits1, dim=-1).argmax(-1)
+            est_init_views2 = F.softmax(est_init_views_logits2, dim=-1).argmax(-1)
+        else:
+            loss = 0
+            est_init_views1 = init_views1
+            est_init_views2 = init_views2
 
         return {
             'best_views1': best_views1,
@@ -265,14 +298,15 @@ class Rotator(SingleClassifier):
         return modulo_views
 
     def choose_feats_from_random_views(self, bs, img1_n_feats, img2_n_feats, init_views1, init_views2):
-        rand_next_views = torch.randint(8, (2, bs))
+        rand_next_views = torch.randint(self.num_views, (2, bs))
         img1_chosen_feats = torch.stack([img1_n_feats[i, [init_views1[i], rand_next_views[0, i]], :].max(dim=-2)[0]
                                        for i in range(bs)])
         img2_chosen_feats = torch.stack([img2_n_feats[i, [init_views2[i], rand_next_views[1, i]], :].max(dim=-2)[0]
                                        for i in range(bs)])
-        return img1_chosen_feats, img2_chosen_feats
+        return img1_chosen_feats, img2_chosen_feats, rand_next_views[0], rand_next_views[1]
 
-    def compute_metrics(self, labels, loss, probs, visual, num_steps, total_correct_estimations):
+    def compute_metrics(self, labels, loss, probs, visual, num_steps,
+                        total_correct_init_view_est, total_correct_final_view_est):
         batch_size = probs.shape[0]
         val_total, val_correct, val_pl_correct = 0, 0, 0.
         visual_total, visual_correct, pl_visual_correct = 0, 0, 0.
@@ -296,7 +330,7 @@ class Rotator(SingleClassifier):
                     pl_nonvis_correct += 1. / num_steps[b]
                 nonvis_total += 1
 
-        correct_ests = total_correct_estimations
+        correct_ests = total_correct_init_view_est + total_correct_final_view_est
         total_rots = 2 * batch_size
 
         val_acc = float(val_correct) / val_total
@@ -305,7 +339,9 @@ class Rotator(SingleClassifier):
         val_pl_visual_acc = float(pl_visual_correct) / visual_total
         val_nonvis_acc = float(nonvis_correct) / nonvis_total
         val_pl_nonvis_acc = float(pl_nonvis_correct) / nonvis_total
-        val_est_err = float(correct_ests) / total_rots
+        val_est_init_err = float(total_correct_init_view_est) / total_rots
+        val_est_final_err = float(total_correct_final_view_est) / total_rots
+        val_est_err = float(correct_ests) / (2 * total_rots)
 
         return dict(
                 val_loss=loss,
@@ -324,6 +360,8 @@ class Rotator(SingleClassifier):
                 val_nonvis_correct=nonvis_correct,
                 val_pl_nonvis_correct=pl_nonvis_correct,
                 val_nonvis_total=nonvis_total,
+                val_est_init_err=val_est_init_err,
+                val_est_final_err=val_est_final_err,
                 val_est_err=val_est_err
             )
 
@@ -347,7 +385,10 @@ class Rotator(SingleClassifier):
             if self.cfg['val']['adversarial_init_view']:
                 out = self.forward(batch, teacher_force=False, init_view_force='adv')
             else:
-                out = self.forward(batch, teacher_force=False, init_view_force=view)
+                bs = batch[1].shape[0]  # get batch size off lang feats (entry index 1 in batch)
+                init_view_force = [torch.ones((bs,)).int().cuda() * view,
+                                   torch.ones((bs,)).int().cuda() * view]
+                out = self.forward(batch, teacher_force=False, init_view_force=init_view_force)
 
             # losses
             losses = self._criterion(out)
@@ -357,9 +398,11 @@ class Rotator(SingleClassifier):
             labels = out['labels']
             visual = out['is_visual']
             num_steps = out['num_steps']
-            total_correct_estimations = out['total_correct_estimations']
+            total_correct_init_view_est = out['total_correct_init_view_est']
+            total_correct_final_view_est = out['total_correct_final_view_est']
 
-            metrics = self.compute_metrics(labels, loss, probs, visual, num_steps, total_correct_estimations)
+            metrics = self.compute_metrics(labels, loss, probs, visual, num_steps,
+                                           total_correct_init_view_est, total_correct_final_view_est)
             all_view_results[view] = metrics
 
         mean_val_loss = np.mean([m['val_loss'].detach().cpu().float() for m in all_view_results.values()])
@@ -393,6 +436,8 @@ class Rotator(SingleClassifier):
                 'val_pl_nonvis_correct': 0,
                 'val_nonvis_total': 0,
 
+                'val_est_init_err': 0.0,
+                'val_est_final_err': 0.0,
                 'val_est_err': 0.0,
             }
 
@@ -413,7 +458,9 @@ class Rotator(SingleClassifier):
                 view_res['val_pl_nonvis_correct'] += int(metrics['val_pl_nonvis_correct'])
                 view_res['val_nonvis_total'] += metrics['val_nonvis_total']
 
-                view_res['val_est_err'] += int(metrics['val_est_err'])
+                view_res['val_est_init_err'] += metrics['val_est_init_err']
+                view_res['val_est_final_err'] += metrics['val_est_final_err']
+                view_res['val_est_err'] += metrics['val_est_err']
 
             view_res['val_loss'] = float(view_res['val_loss']) / len(all_outputs)
 
@@ -426,6 +473,8 @@ class Rotator(SingleClassifier):
             view_res['val_nonvis_acc'] = float(view_res['val_nonvis_correct']) / view_res['val_nonvis_total']
             view_res['val_pl_nonvis_acc'] = float(view_res['val_pl_nonvis_correct']) / view_res['val_nonvis_total']
 
+            view_res['val_est_init_err'] = float(view_res['val_est_init_err']) / len(all_outputs)
+            view_res['val_est_final_err'] = float(view_res['val_est_final_err']) / len(all_outputs)
             view_res['val_est_err'] = float(view_res['val_est_err']) / len(all_outputs)
 
             n_view_res[view] = view_res

@@ -24,7 +24,8 @@ def main(cfg):
     hydra_dir = Path(os.getcwd())
     checkpoint_path = hydra_dir / 'checkpoints'
     last_checkpoint_path = os.path.join(checkpoint_path, 'last.ckpt')
-    last_checkpoint = last_checkpoint_path if os.path.exists(last_checkpoint_path) and cfg['train']['load_from_last_ckpt'] else None
+    last_checkpoint = last_checkpoint_path \
+        if os.path.exists(last_checkpoint_path) and cfg['train']['load_from_last_ckpt'] else None
 
     checkpoint_callback = ModelCheckpoint(
         monitor=cfg['wandb']['saver']['monitor'],

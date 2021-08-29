@@ -15,6 +15,7 @@ import models.aggregator as agg
 class SingleClassifier(LightningModule):
 
     def __init__(self, cfg, train_ds, val_ds):
+        self.optimizer = None
         super().__init__()
 
         self.cfg = cfg
@@ -82,7 +83,8 @@ class SingleClassifier(LightningModule):
         )
 
     def configure_optimizers(self):
-        return torch.optim.Adam(self.parameters(), lr=self.cfg['train']['lr'])
+        self.optimizer = torch.optim.Adam(self.parameters(), lr=self.cfg['train']['lr'])
+        return self.optimizer
 
     def smoothed_cross_entropy(self, pred, target, alpha=0.1):
         # From ShapeGlot (Achlioptas et. al)

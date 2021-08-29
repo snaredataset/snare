@@ -12,6 +12,15 @@ class MaxPool(nn.Module):
         return x
 
 
+class MeanPool(nn.Module):
+    def __init__(self, cfg):
+        super().__init__()
+        self.cfg = cfg
+
+    def forward(self, x):
+        return x.mean(dim=-2) # [B 14 512] -> [B 512]
+
+
 class RandomIndex(nn.Module):
     def __init__(self, cfg):
         super().__init__()
@@ -35,7 +44,9 @@ class TwoRandomIndex(nn.Module):
         x, _ = torch.stack([x1, x2], dim=-1).max(dim=-1)                     # [B 512]
         return x
 
+
 names = {
+    'meanpool': MeanPool,
     'maxpool': MaxPool,
     'random_index': RandomIndex,
     'two_random_index': TwoRandomIndex,
