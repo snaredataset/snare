@@ -5,7 +5,7 @@ JOB_NUM=0
 
 for RANDOM_SEED in 0 1 2 3 4 5 6 7 8 9
 do
-  EXP_FOLDER="exp_aug23_seed_$RANDOM_SEED"
+  EXP_FOLDER="clips/exp_aug23_seed_$RANDOM_SEED"
   echo $EXP_FOLDER
 
   ## fine-tuned CLIP classifiers

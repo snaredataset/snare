@@ -163,7 +163,6 @@ class SingleClassifier(LightningModule):
                 'num_steps': num_steps,
             }
 
-
     def training_step(self, batch, batch_idx):
         out = self.forward(batch)
 
@@ -262,6 +261,7 @@ class SingleClassifier(LightningModule):
 
     def validation_epoch_end(self, all_outputs, mode='vl'):
         n_view_res = {}
+        sanity_check = True
         for view in range(self.num_views):
 
             view_res = {
@@ -288,6 +288,8 @@ class SingleClassifier(LightningModule):
                 view_res['val_correct'] += metrics['val_correct']
                 view_res['val_pl_correct'] += int(metrics['val_pl_correct'])
                 view_res['val_total'] += metrics['val_total']
+                if view_res['val_total'] > 128:
+                    sanity_check = False
 
                 view_res['val_visual_correct'] += metrics['val_visual_correct']
                 view_res['val_pl_visual_correct'] += int(metrics['val_pl_visual_correct'])
@@ -331,38 +333,40 @@ class SingleClassifier(LightningModule):
             f'{mode}/all_view_res': n_view_res,
         }
 
-        # test (ran once at the end of training)
-        if mode == 'test':
-            self.best_test_res = dict(res)
+        if not sanity_check:  # only check best conditions and dump data if this isn't a sanity check
 
-        # val (keep track of best results)
-        else:
-            if val_acc > self.best_val_acc:
-                self.best_val_acc = val_acc
-                self.best_val_res = dict(res)
+            # test (ran once at the end of training)
+            if mode == 'test':
+                self.best_test_res = dict(res)
 
-        # results to save
-        results_dict = self.best_test_res if mode == 'test' else self.best_val_res
+            # val (keep track of best results)
+            else:
+                if val_acc > self.best_val_acc:
+                    self.best_val_acc = val_acc
+                    self.best_val_res = dict(res)
 
-        best_loss = results_dict[f'{mode}/loss']
-        best_acc = results_dict[f'{mode}/acc']
-        best_acc_visual = results_dict[f'{mode}/acc_visual']
-        best_acc_nonvis = results_dict[f'{mode}/acc_nonvis']
-        best_pl_acc = results_dict[f'{mode}/pl_acc']
-        best_pl_acc_visual = results_dict[f'{mode}/pl_acc_visual']
-        best_pl_acc_nonvis = results_dict[f'{mode}/pl_acc_nonvis']
+            # results to save
+            results_dict = self.best_test_res if mode == 'test' else self.best_val_res
 
-        seed = self.cfg['train']['random_seed']
-        json_file = os.path.join(self.save_path, f'{mode}-results-{seed}.json')
+            best_loss = results_dict[f'{mode}/loss']
+            best_acc = results_dict[f'{mode}/acc']
+            best_acc_visual = results_dict[f'{mode}/acc_visual']
+            best_acc_nonvis = results_dict[f'{mode}/acc_nonvis']
+            best_pl_acc = results_dict[f'{mode}/pl_acc']
+            best_pl_acc_visual = results_dict[f'{mode}/pl_acc_visual']
+            best_pl_acc_nonvis = results_dict[f'{mode}/pl_acc_nonvis']
 
-        # save results
-        with open(json_file, 'w') as f:
-            json.dump(results_dict, f, sort_keys=True, indent=4)
+            seed = self.cfg['train']['random_seed']
+            json_file = os.path.join(self.save_path, f'{mode}-results-{seed}.json')
 
-        # print best result
-        print("\nBest-----:")
-        print(f'Best {mode} Acc: {best_acc:0.5f} ({best_pl_acc:0.5f}) | Visual {best_acc_visual:0.5f} ({best_pl_acc_visual:0.5f}) | Nonvis: {best_acc_nonvis:0.5f} ({best_pl_acc_nonvis:0.5f}) | Val Loss: {best_loss:0.8f} ')
-        print("------------")
+            # save results
+            with open(json_file, 'w') as f:
+                json.dump(results_dict, f, sort_keys=True, indent=4)
+
+            # print best result
+            print("\nBest-----:")
+            print(f'Best {mode} Acc: {best_acc:0.5f} ({best_pl_acc:0.5f}) | Visual {best_acc_visual:0.5f} ({best_pl_acc_visual:0.5f}) | Nonvis: {best_acc_nonvis:0.5f} ({best_pl_acc_nonvis:0.5f}) | Val Loss: {best_loss:0.8f} ')
+            print("------------")
 
         if self.log_data:
             wandb.log(res)

@@ -5,7 +5,7 @@ hydra:
     dir: ${root_dir}/${train.exps_folder}/
     subdir: ${train.folder}
 
-root_dir: <root_dir>
+root_dir: <rootdir>
 
 tag: default
 seed: 0
@@ -55,6 +55,8 @@ train:
   rotator:
     teacher_force: True # during training
     pretrained_cls: '${root_dir}/exp_may06/clip-single_cls-random_index/checkpoints/epoch=0041-val_acc=0.80161.ckpt'
+    estimate_init_state: True
+    estimate_final_state: True
 
   loss:
     est_weight: 1.0

@@ -269,7 +269,7 @@ class Rotator(SingleClassifier):
             loss = 0
             est_init_views1 = init_views1
             est_init_views2 = init_views2
-        
+
         return {
             'best_views1': best_views1,
             'best_views2': best_views2,
@@ -339,9 +339,9 @@ class Rotator(SingleClassifier):
         val_pl_visual_acc = float(pl_visual_correct) / visual_total
         val_nonvis_acc = float(nonvis_correct) / nonvis_total
         val_pl_nonvis_acc = float(pl_nonvis_correct) / nonvis_total
-        val_est_init_err = float(total_correct_init_view_est) / total_rots
-        val_est_final_err = float(total_correct_final_view_est) / total_rots
-        val_est_err = float(correct_ests) / (2 * total_rots)
+        val_est_init_err = (total_rots - float(total_correct_init_view_est)) / total_rots
+        val_est_final_err = (total_rots - float(total_correct_final_view_est)) / total_rots
+        val_est_err = (2 * total_rots - float(correct_ests)) / (2 * total_rots)
 
         return dict(
                 val_loss=loss,
@@ -419,6 +419,7 @@ class Rotator(SingleClassifier):
         n_view_res = {}
         views = list(range(self.num_views))
 
+        sanity_check = True
         for view in views:
 
             view_res = {
@@ -466,6 +467,8 @@ class Rotator(SingleClassifier):
 
             view_res['val_acc'] = float(view_res['val_correct']) / view_res['val_total']
             view_res['val_pl_acc'] = float(view_res['val_pl_correct']) / view_res['val_total']
+            if view_res['val_total'] > 128:
+                sanity_check = False
 
             view_res['val_visual_acc'] = float(view_res['val_visual_correct']) / view_res['val_visual_total']
             view_res['val_pl_visual_acc'] = float(view_res['val_pl_visual_correct']) / view_res['val_visual_total']
@@ -503,34 +506,36 @@ class Rotator(SingleClassifier):
             f'{mode}/all_view_res': n_view_res,
         }
 
-        if mode == 'test':
-            self.best_test_res = dict(res)
-        else:
-            if val_acc > self.best_val_acc:
-                self.best_val_acc = val_acc
-                self.best_val_res = dict(res)
+        if not sanity_check:  # only check best conditions and dump data if this isn't a sanity check
 
-        dump_res = self.best_test_res if mode == 'test' else self.best_val_res
+            if mode == 'test':
+                self.best_test_res = dict(res)
+            else:
+                if val_acc > self.best_val_acc:
+                    self.best_val_acc = val_acc
+                    self.best_val_res = dict(res)
 
-        # print best result
-        print("\nBest-----:")
-        best_loss = dump_res[f'{mode}/loss']
-        best_acc = dump_res[f'{mode}/acc']
-        best_acc_visual = dump_res[f'{mode}/acc_visual']
-        best_acc_nonvis = dump_res[f'{mode}/acc_nonvis']
-        best_pl_acc = dump_res[f'{mode}/pl_acc']
-        best_pl_acc_visual = dump_res[f'{mode}/pl_acc_visual']
-        best_pl_acc_nonvis = dump_res[f'{mode}/pl_acc_nonvis']
-        best_est_err = dump_res[f'{mode}/est_err']
+            dump_res = self.best_test_res if mode == 'test' else self.best_val_res
 
-        seed = self.cfg['train']['random_seed']
-        json_file = os.path.join(self.save_path, f'{mode}-results-{seed}.json')
-        with open(json_file, 'w') as f:
-            json.dump(dump_res, f, sort_keys=True, indent=4)
+            # print best result
+            print("\nBest-----:")
+            best_loss = dump_res[f'{mode}/loss']
+            best_acc = dump_res[f'{mode}/acc']
+            best_acc_visual = dump_res[f'{mode}/acc_visual']
+            best_acc_nonvis = dump_res[f'{mode}/acc_nonvis']
+            best_pl_acc = dump_res[f'{mode}/pl_acc']
+            best_pl_acc_visual = dump_res[f'{mode}/pl_acc_visual']
+            best_pl_acc_nonvis = dump_res[f'{mode}/pl_acc_nonvis']
+            best_est_err = dump_res[f'{mode}/est_err']
 
-        print(f'Curr Acc: {res[f"{mode}/acc"]:0.5f} ({res[f"{mode}/pl_acc"]:0.5f}) | Visual {res[f"{mode}/acc_visual"]:0.5f} ({res[f"{mode}/pl_acc_visual"]:0.5f}) | Nonvis: {res[f"{mode}/acc_nonvis"]:0.5f} ({res[f"{mode}/pl_acc_nonvis"]:0.5f}) | Avg. Est Err: {res[f"{mode}/est_err"]:0.5f} | Val Loss: {res[f"{mode}/loss"]:0.8f} ')
-        print(f'Best Acc: {best_acc:0.5f} ({best_pl_acc:0.5f}) | Visual {best_acc_visual:0.5f} ({best_pl_acc_visual:0.5f}) | Nonvis: {best_acc_nonvis:0.5f} ({best_pl_acc_nonvis:0.5f}) | Avg. Est Err: {best_est_err:0.5f} | Val Loss: {best_loss:0.8f} ')
-        print("------------")
+            seed = self.cfg['train']['random_seed']
+            json_file = os.path.join(self.save_path, f'{mode}-results-{seed}.json')
+            with open(json_file, 'w') as f:
+                json.dump(dump_res, f, sort_keys=True, indent=4)
+
+            print(f'Curr Acc: {res[f"{mode}/acc"]:0.5f} ({res[f"{mode}/pl_acc"]:0.5f}) | Visual {res[f"{mode}/acc_visual"]:0.5f} ({res[f"{mode}/pl_acc_visual"]:0.5f}) | Nonvis: {res[f"{mode}/acc_nonvis"]:0.5f} ({res[f"{mode}/pl_acc_nonvis"]:0.5f}) | Avg. Est Err: {res[f"{mode}/est_err"]:0.5f} | Val Loss: {res[f"{mode}/loss"]:0.8f} ')
+            print(f'Best Acc: {best_acc:0.5f} ({best_pl_acc:0.5f}) | Visual {best_acc_visual:0.5f} ({best_pl_acc_visual:0.5f}) | Nonvis: {best_acc_nonvis:0.5f} ({best_pl_acc_nonvis:0.5f}) | Avg. Est Err: {best_est_err:0.5f} | Val Loss: {best_loss:0.8f} ')
+            print("------------")
 
         if self.log_data:
             wandb.log(res)
