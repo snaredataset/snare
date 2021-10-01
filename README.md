@@ -58,3 +58,10 @@ To train the rotators, edit [`scripts/train_rotators.sh`](scripts/train_rotators
 ```
 PRETRAINED_CLS="<root_path>/clip-single_cls-random_index/checkpoints/<ckpt_name>.ckpt'"
 ```
+
+## Preprocessing
+
+If you want to extract CLIP vision and language features from raw images:
+
+1. Download models-screenshot.zip from [ShapeNetSem](http://shapenet.cs.stanford.edu/shapenet/obj-zip/ShapeNetSem.v0/).
+2. Edit and run `python scripts/extract_clip_features.py` to save `shapenet-clipViT32-frames.json.gz` and `langfeat-512-clipViT32.json.gz` 
