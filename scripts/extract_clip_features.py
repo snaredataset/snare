@@ -17,7 +17,7 @@ folds = './amt/folds_adversarial'
 keys = os.listdir(shapenet_images_path)
 
 # Load pre-trained CLIP
-device = "cuda" # if torch.cuda.is_available() else "cpu"
+device = "cuda" if torch.cuda.is_available() else "cpu"
 clip_model, preprocess = clip.load("ViT-B/32", device=device)
 
 # Extract CLIP visual features
