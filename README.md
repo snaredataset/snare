@@ -65,3 +65,11 @@ If you want to extract CLIP vision and language features from raw images:
 
 1. Download models-screenshot.zip from [ShapeNetSem](http://shapenet.cs.stanford.edu/shapenet/obj-zip/ShapeNetSem.v0/), and extract it inside `./data/`.
 2. Edit and run `python scripts/extract_clip_features.py` to save `shapenet-clipViT32-frames.json.gz` and `langfeat-512-clipViT32.json.gz` 
+
+## Leaderboard
+
+We are in the process of setting up an automated leaderboard. In the meantime, please send your `...test.json` prediction results to [Mohit Shridhar][mailto:mshr@cs.washington.edu]. We will get back to you as soon as possible. 
+
+**Instructions**:
+- Include a name for your model, your team name, and affiliation (if not anonymous).
+- Submissions are limited to a maximmum of one per week. 
