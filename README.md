@@ -68,11 +68,11 @@ If you want to extract CLIP vision and language features from raw images:
 
 ## Leaderboard
 
-We are in the process of setting up an automated leaderboard. In the meantime, please send your `...test.json` prediction results to [Mohit Shridhar](mailto:mshr@cs.washington.edu). We will get back to you as soon as possible. 
+Please send your `...test.json` prediction results to [Mohit Shridhar](mailto:mshr@cs.washington.edu). We will get back to you as soon as possible. 
 
 **Instructions**:
 - Include a name for your model, your team name, and affiliation (if not anonymous).
-- Submissions are limited to a maximmum of one per week. 
+- Submissions are limited to a maximmum of one per week. Please do not create fake email accounts and send multiple submissions.  
 
 **Rankings**:
 
