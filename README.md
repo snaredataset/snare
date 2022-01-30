@@ -72,7 +72,7 @@ Please send your `...test.json` prediction results to [Mohit Shridhar](mailto:ms
 
 **Instructions**:
 - Include a name for your model, your team name, and affiliation (if not anonymous).
-- Submissions are limited to a maximmum of one per week. Please do not create fake email accounts and send multiple submissions.  
+- Submissions are limited to a maximum of one per week. Please do not create fake email accounts and send multiple submissions.  
 
 **Rankings**:
 
