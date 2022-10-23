@@ -81,5 +81,6 @@ Please send your `...test.json` prediction results to [Mohit Shridhar](mailto:ms
 | 1    | **VLG** <br>[(Corona et al.)](https://arxiv.org/abs/2205.09710)<br>15 Mar 2022  | 79.0 |  86.0  |  71.7 |
 | 1    | **LOCKET** <br>(Anonymous)<br>14 Oct 2022  | 79.0 |  86.1  |  71.5 |
 | 3    | **VLG** <br>[(Corona et al.)](https://arxiv.org/abs/2205.09710)<br>13 Nov 2021  | 78.7 |  85.8  |  71.3 |
-| 4    | **LAGOR** <br>[(Thomason et. al)](https://arxiv.org/pdf/2107.12514.pdf)<br>15 Sep 2021 | 77.0 |  84.3  |  69.4 |
-| 5    | **MATCH** <br>[(Thomason et. al)](https://arxiv.org/pdf/2107.12514.pdf)<br>15 Sep 2021 | 76.4 | 83.7   | 68.7  |
+| 4    | **LOCKET** <br>(Anonymous)<br>23 Oct 2022  | 77.7 |  85.5  |  69.5 |
+| 5    | **LAGOR** <br>[(Thomason et. al)](https://arxiv.org/pdf/2107.12514.pdf)<br>15 Sep 2021 | 77.0 |  84.3  |  69.4 |
+| 6    | **MATCH** <br>[(Thomason et. al)](https://arxiv.org/pdf/2107.12514.pdf)<br>15 Sep 2021 | 76.4 | 83.7   | 68.7  |
