@@ -31,7 +31,7 @@ $ pip install -r requirements.txt
 Edit `root_dir` in [cfgs/train.yaml](cfgs/train.yaml) to reflect your working directory.
 
 #### Download Data and Checkpoints 
-Download pre-extracted image features, language features, and pre-trained checkpoints from [here](https://drive.google.com/drive/folders/1rExJT7LYJ0piZz6s54PaLOKWNElbuGrU?usp=sharing) and put them in the `data/` folder. 
+Download pre-extracted image features, language features, and pre-trained checkpoints from [here](https://drive.google.com/drive/folders/18sKN1MawcCjqQ4nbe6m4XAcWogWClKGe?usp=share_link) and put them in the `data/` folder. 
 
 ## Usage
 
