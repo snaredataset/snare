@@ -78,7 +78,7 @@ Please send your `...test.json` prediction results to [Mohit Shridhar](mailto:ms
 
 | Rank | Model                       | All  | Visual | Blind |
 |------|-----------------------------|------|:------:|:-----:|
-| 1    | **Transformer Classifier** <br>(Anonymous)<br>8 Jun 2023  | 81.7 |  87.7  |  75.4 |
+| 1    | **MAGiC** <br>(Anonymous)<br>8 Jun 2023  | 81.7 |  87.7  |  75.4 |
 | 2    | **VLG** <br>[(Corona et al.)](https://arxiv.org/abs/2205.09710)<br>15 Mar 2022  | 79.0 |  86.0  |  71.7 |
 | 2    | **LOCKET** <br>(Anonymous)<br>14 Oct 2022  | 79.0 |  86.1  |  71.5 |
 | 4    | **VLG** <br>[(Corona et al.)](https://arxiv.org/abs/2205.09710)<br>13 Nov 2021  | 78.7 |  85.8  |  71.3 |
