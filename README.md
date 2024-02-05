@@ -78,11 +78,12 @@ Please send your `...test.json` prediction results to [Mohit Shridhar](mailto:ms
 
 | Rank | Model                       | All  | Visual | Blind |
 |------|-----------------------------|------|:------:|:-----:|
-| 1    | **MAGiC** <br>(Anonymous)<br>8 Jun 2023  | 81.7 |  87.7  |  75.4 |
-| 2    | **DA4LG** <br>(Anonymous)<br>27 Jan 2024  | 80.9 |  87.7  |  73.7 |
-| 3    | **VLG** <br>[(Corona et al.)](https://arxiv.org/abs/2205.09710)<br>15 Mar 2022  | 79.0 |  86.0  |  71.7 |
-| 4    | **LOCKET** <br>(Anonymous)<br>14 Oct 2022  | 79.0 |  86.1  |  71.5 |
-| 5    | **VLG** <br>[(Corona et al.)](https://arxiv.org/abs/2205.09710)<br>13 Nov 2021  | 78.7 |  85.8  |  71.3 |
-| 6    | **LOCKET** <br>(Anonymous)<br>23 Oct 2022  | 77.7 |  85.5  |  69.5 |
-| 7    | **LAGOR** <br>[(Thomason et. al)](https://arxiv.org/pdf/2107.12514.pdf)<br>15 Sep 2021 | 77.0 |  84.3  |  69.4 |
-| 8    | **MATCH** <br>[(Thomason et. al)](https://arxiv.org/pdf/2107.12514.pdf)<br>15 Sep 2021 | 76.4 | 83.7   | 68.7  |
+| 1    | **DA4LG** <br>(Anonymous)<br>5 Feb 2024  | 81.9 |  88.5  |  75.0 |
+| 2    | **MAGiC** <br>(Anonymous)<br>8 Jun 2023  | 81.7 |  87.7  |  75.4 |
+| 3    | **DA4LG** <br>(Anonymous)<br>27 Jan 2024  | 80.9 |  87.7  |  73.7 |
+| 4    | **VLG** <br>[(Corona et al.)](https://arxiv.org/abs/2205.09710)<br>15 Mar 2022  | 79.0 |  86.0  |  71.7 |
+| 5    | **LOCKET** <br>(Anonymous)<br>14 Oct 2022  | 79.0 |  86.1  |  71.5 |
+| 6    | **VLG** <br>[(Corona et al.)](https://arxiv.org/abs/2205.09710)<br>13 Nov 2021  | 78.7 |  85.8  |  71.3 |
+| 7    | **LOCKET** <br>(Anonymous)<br>23 Oct 2022  | 77.7 |  85.5  |  69.5 |
+| 8    | **LAGOR** <br>[(Thomason et. al)](https://arxiv.org/pdf/2107.12514.pdf)<br>15 Sep 2021 | 77.0 |  84.3  |  69.4 |
+| 9    | **MATCH** <br>[(Thomason et. al)](https://arxiv.org/pdf/2107.12514.pdf)<br>15 Sep 2021 | 76.4 | 83.7   | 68.7  |
