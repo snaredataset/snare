@@ -79,7 +79,7 @@ Please send your `...test.json` prediction results to [Mohit Shridhar](mailto:ms
 | Rank | Model                       | All  | Visual | Blind |
 |------|-----------------------------|------|:------:|:-----:|
 | 1    | **DA4LG** <br>(Anonymous)<br>5 Feb 2024  | 81.9 |  88.5  |  75.0 |
-| 2    | **MAGiC** <br>(Anonymous)<br>8 Jun 2023  | 81.7 |  87.7  |  75.4 |
+| 2    | **MAGiC** <br>[(Mitra et al.)](https://arxiv.org/abs/2311.06694)<br>8 Jun 2023  | 81.7 |  87.7  |  75.4 |
 | 3    | **DA4LG** <br>(Anonymous)<br>27 Jan 2024  | 80.9 |  87.7  |  73.7 |
 | 4    | **VLG** <br>[(Corona et al.)](https://arxiv.org/abs/2205.09710)<br>15 Mar 2022  | 79.0 |  86.0  |  71.7 |
 | 5    | **LOCKET** <br>(Anonymous)<br>14 Oct 2022  | 79.0 |  86.1  |  71.5 |
